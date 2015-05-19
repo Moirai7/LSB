@@ -64,6 +64,8 @@ Desktop.ini
 
 # Recycle Bin used on file shares
 $RECYCLE.BIN/
+Debug/
+ipch/
 
 # Windows Installer files
 *.cab

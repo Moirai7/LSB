@@ -21,10 +21,11 @@ public:
 	bool SaveFile(CString,unsigned char*);
 	unsigned char* GetPixels(CString,unsigned char* =NULL);
 	unsigned char* GetFileInfo();
-
+	unsigned char* GetHead();
 	int GetWidth();
 	int GetHeight();
 	int GetLineByte();
+	int GetBitCount();
 
 	//可以隐藏的数据信息
 	int GetSize();

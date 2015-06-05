@@ -48,7 +48,7 @@ bool FileUtil::ReadFile(CString file){
 	if(biBitCount==8)  
     {  
         pColorTable=new RGBQUAD[256];  
-		fp.Read(pColorTable,sizeof(RGBQUAD));  
+		fp.Read(pColorTable,sizeof(RGBQUAD)*256);  
     }  
 
 	fileInfo =new unsigned char[lineByte*bmpHeight];  
@@ -218,7 +218,16 @@ int FileUtil::GetSize(){
 	return lineByte*bmpHeight;
 }
 
+//返回图片类型
+int FileUtil::GetBitCount(){
+	return biBitCount;
+}
+
 //这里是得到图像数据的
 unsigned char* FileUtil::GetFileInfo(){
 	return fileInfo;
+}
+
+unsigned char* FileUtil::GetHead(){
+	return (unsigned char*)&fileHead;
 }

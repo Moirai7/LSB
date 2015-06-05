@@ -4,7 +4,7 @@
 
 #pragma once
 
-
+#include <iostream>
 // CLSBDlg ¶Ô»°¿ò
 class CLSBDlg : public CDialogEx
 {

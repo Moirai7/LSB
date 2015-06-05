@@ -7,6 +7,8 @@
 #ifndef LANLAN_LSBUtil   //如果没有定义这个宏
 #define LANLAN_LSBUtil   //定义这个宏
 
+#define U 1000 //高斯分布的均值
+#define D 30 //高斯分布的均方差
 //这个文件是LSB加密解密的文件
 class LSBUtil
 {
@@ -18,13 +20,22 @@ public:
 	bool ExtractPixels(unsigned char*,int =0,int =7);
 	unsigned char* GetPixelsInfo();
 	unsigned char* GetTextData();
+	bool SetGaussNoise(unsigned char* ,int );
+	bool SaveInfoLength(int ,unsigned char* );
+	bool CountLSB(unsigned char*);
+	int GetInfoLength(unsigned char* );
+	int GetZero();
+	int GetOne();
 
 private:
 	int* BuildRandomSequence(int,int,int);
+	int Gaus_S();
 	unsigned char* LSBPixels;
 	int bmpWidth;
 	int bmpHeight;
 	unsigned char* pTextFile;
+	int zeroCount;
+	int oneCount;
 };
 #endif
 

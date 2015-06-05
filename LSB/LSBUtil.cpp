@@ -11,6 +11,8 @@ LSBUtil::LSBUtil(int w,int h)
 {
 	bmpWidth = w;
 	bmpHeight = h;
+	zeroCount = 0;
+	oneCount = 0;
 }
 
 
@@ -40,6 +42,49 @@ int* LSBUtil::BuildRandomSequence(int low, int high,int key) {
 	return array;
 }
 
+//保存文件长度
+//最好保存到文件头里
+bool LSBUtil::SaveInfoLength(int length,unsigned char* fileInfo)
+{
+	int* pfile = (int *)(fileInfo+6);
+	*pfile = length;
+
+	return true;
+}
+
+//读取文件长度
+int LSBUtil::GetInfoLength(unsigned char* fileInfo)
+{  
+	DWORD saveLength = 0x00000000;   
+	BYTE bit;   
+	//获取保存数据长度  
+
+	int* pfile = (int *)(fileInfo+6);
+
+	return *pfile; 
+}
+
+bool LSBUtil::CountLSB(unsigned char* fileInfo){
+	zeroCount = 0;
+	oneCount = 0;
+	unsigned char infoData;
+	for(int i=0; i<bmpHeight*bmpWidth; ++i){
+		for(int j=0; j<8; ++j){
+			infoData = fileInfo[i]>>j;
+			infoData = infoData & 0x01;
+			if(infoData == 0)   
+			{   
+				zeroCount += 1;
+			}   
+			else   
+			{   
+				oneCount += 1; 
+			}  
+		}
+	} 
+	return true;
+}
+
 //这个是嵌入的时候调用的
 //调用方法举例
 //  FileUtil* fu = new FileUtil();
@@ -64,36 +109,15 @@ bool LSBUtil::HandlePixels(unsigned char* fileInfo,unsigned char* saveInfo,int l
 			infoData = infoData & 0x01;
 			if(infoData == 0)   
 			{   
-				fileInfo[array[k]] = fileInfo[array[k]]&0xfe;   
+				fileInfo[array[k]] = fileInfo[array[k]]&0xfe;
 			}   
 			else   
 			{   
-				fileInfo[array[k]] = fileInfo[array[k]]|0x01;   
+				fileInfo[array[k]] = fileInfo[array[k]]|0x01; 
 			}  
 			++k;
 		}
-	}
-	//在前四个字节中写入加密数据长度   
-    DWORD saveLength;   
-    for(int m=0; m<32; ++m)   
-    {   
-		saveLength = length>>m;   
-        saveLength = saveLength&0x00000001;   
-        if(saveLength==0)   
-        {   
-            fileInfo[m] = fileInfo[m]&0x1e;   
-        }   
-        else   
-        {   
-            fileInfo[m] = fileInfo[m]|0x01;   
-        }   
-    }   
-
-	//可以使用查看二进制的文件查看，这里写入了保存的数据
-	CFile textFile;   
-    textFile.Open(CString("./image/copy/1.bin"),CFile::modeCreate | CFile::modeWrite);   
-    textFile.Write((char*)pTextFile,length);   
-    textFile.Close(); 
+	} 
 
 	LSBPixels = fileInfo;
 	return true;
@@ -113,29 +137,10 @@ bool LSBUtil::HandlePixels(unsigned char* fileInfo,unsigned char* saveInfo,int l
 //key 是指生成随机序列的key，默认为7
 //
 bool LSBUtil::ExtractPixels(unsigned char* fileInfo,int length,int key){
-	if(length == 0)
-	{
-		DWORD saveLength = 0x00000000;   
-		BYTE bit;   
-		//获取保存数据长度   
-		for(int i=0; i<32; ++i)   
-		{   
-			bit = fileInfo[i]&0x01;   
-			if(bit==0)   
-			{   
-				saveLength = saveLength&0x7fffffff;   
-			}   
-			else   
-			{   
-				saveLength = saveLength|0x80000000;   
-			}   
-			if (i<31)       
-				saveLength = saveLength>>1;   
-		}  
-		length = saveLength;
-	}
+	
+	if(length<=0 || length>bmpWidth*bmpHeight) return false;
 	//开始提取   
-	pTextFile = new unsigned char[length];   
+	pTextFile = new unsigned char[length+1];   
 	int* array = BuildRandomSequence(0,bmpWidth*bmpHeight,key);
 	unsigned char infoData;
 
@@ -155,11 +160,52 @@ bool LSBUtil::ExtractPixels(unsigned char* fileInfo,int length,int key){
         if (i%8 != 7)    
             pTextFile[k] = pTextFile[k]>>1;   
 	}
+	pTextFile[length] = '\0';
 	//可以使用查看二进制的文件查看，这里写入提取到的保存的数据
 	CFile textFile;   
-    textFile.Open(CString("./image/result/1.bin"),CFile::modeCreate | CFile::modeWrite);   
+    textFile.Open(CString("./image/result/Extract.bin"),CFile::modeCreate | CFile::modeWrite);   
     textFile.Write((char*)pTextFile,length);   
     textFile.Close(); 
+	return true;
+}
+
+int LSBUtil::Gaus_S(){ //产生高斯样本，以U为均值，D为均方差
+	double sum=0; 
+	for(int i=0;i<12;i++) 
+		sum+=rand()/32767.00;
+
+	//计算机中rand()函数为－32767～＋32767（2^15-1）
+	//故sum＋为0～1之间的均匀随机变量
+	//产生均值为U，标准差为D的高斯分布的样本，并返回
+
+	return int(U+D*(sum-6));
+}
+
+//这个是添加随机噪声的函数
+//lsb->SetGaussNoise(fu->GetFileInfo(),fu->GetBitCount());
+//fileInfo是图像数据
+//type是图像的类型 灰度 还是 24
+bool LSBUtil::SetGaussNoise(unsigned char* fileInfo,int type){
+	if (fileInfo== NULL) return false;
+	int x,y,p;
+	srand((unsigned)time(NULL));  //种下随机种子
+	for(y=0;y<bmpHeight;y++)
+	{
+		for(x=0;x<bmpWidth;x++)
+		{
+			if(type == 8){
+				p=x+y*bmpWidth; //p为现在处理的象素点
+				fileInfo[p]+=Gaus_S();
+			}else{
+				p=x*3+y*bmpWidth; //p为现在处理的象素点
+				//向R、G、B三个分量分别添加高斯噪声
+				fileInfo[p+2]+=Gaus_S();
+				fileInfo[p+1]+=Gaus_S();
+				fileInfo[p]+=Gaus_S();
+			}
+		}
+	} 
+	LSBPixels = fileInfo;
 	return true;
 }
 
@@ -170,4 +216,12 @@ unsigned char* LSBUtil::GetTextData(){
 
 unsigned char* LSBUtil::GetPixelsInfo(){
 	return LSBPixels;
+}
+
+int LSBUtil::GetZero(){
+	return zeroCount;
+}
+
+int LSBUtil::GetOne(){
+	return oneCount;
 }

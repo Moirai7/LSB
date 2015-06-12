@@ -189,20 +189,35 @@ bool LSBUtil::SetGaussNoise(unsigned char* fileInfo,int type){
 	if (fileInfo== NULL) return false;
 	int x,y,p;
 	srand((unsigned)time(NULL));  //种下随机种子
+	double temp;
 	for(y=0;y<bmpHeight;y++)
 	{
 		for(x=0;x<bmpWidth;x++)
 		{
-			if(type == 8){
-				p=x+y*bmpWidth; //p为现在处理的象素点
-				fileInfo[p]+=Gaus_S();
-			}else{
-				p=x*3+y*bmpWidth; //p为现在处理的象素点
-				//向R、G、B三个分量分别添加高斯噪声
-				fileInfo[p+2]+=Gaus_S();
-				fileInfo[p+1]+=Gaus_S();
-				fileInfo[p]+=Gaus_S();
-			}
+			temp = double (rand ()) / RAND_MAX;
+            if (temp > 1 - SALT) {
+				if(type == 8){
+					p=x+y*bmpWidth; //p为现在处理的象素点
+					fileInfo[p]+=Gaus_S();
+				}else{
+					p=x*3+y*bmpWidth; //p为现在处理的象素点
+					//向R、G、B三个分量分别添加高斯噪声
+					fileInfo[p+2]+=Gaus_S();
+					fileInfo[p+1]+=Gaus_S();
+					fileInfo[p]+=Gaus_S();
+				}
+            } else if (temp < PEPPER) {
+				if(type == 8){
+					p=x+y*bmpWidth; //p为现在处理的象素点
+					fileInfo[p]+=Gaus_S();
+				}else{
+					p=x*3+y*bmpWidth; //p为现在处理的象素点
+					//向R、G、B三个分量分别添加高斯噪声
+					fileInfo[p+2]+=Gaus_S();
+					fileInfo[p+1]+=Gaus_S();
+					fileInfo[p]+=Gaus_S();
+				}
+            }
 		}
 	} 
 	LSBPixels = fileInfo;

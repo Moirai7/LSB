@@ -159,9 +159,9 @@ HCURSOR CLSBDlg::OnQueryDragIcon()
 void CLSBDlg::OnBnClickedButtonReadFile()
 {
 	FileUtil* fu = new FileUtil();
-	if(fu->ReadFile(CString("./image/24/test1.BMP")))
+	if(fu->ReadFile(CString("./image/24/LENA_COLOR.BMP")))
 	{
-		fu->SaveFile(CString("./image/copy/4.bmp"),fu->GetFileInfo());
+		//fu->SaveFile(CString("./image/copy/4.bmp"),fu->GetFileInfo());
 
 		LSBUtil* lsb = new LSBUtil(fu->GetLineByte(),fu->GetHeight());
 
@@ -169,18 +169,19 @@ void CLSBDlg::OnBnClickedButtonReadFile()
 		int zero_before = lsb->GetZero();
 		int one_before = lsb->GetOne();
 
-		//lsb->SetGaussNoise(fu->GetFileInfo(),fu->GetBitCount());
+		/*lsb->SaveInfoLength(45,fu->GetHead());
+		lsb->HandlePixels(fu->GetFileInfo(),(unsigned char*)"lanlanjielanlanjielanlanjielanlanjielanlanjie",45);
+
+		lsb->SetGaussNoise(fu->GetFileInfo(),fu->GetBitCount());*/
 
 		lsb->HandlePixels(fu->GetFileInfo(),(unsigned char*)"lanlanjielanlanjielanlanjielanlanjielanlanjie",45);
 
-		lsb->CountLSB(fu->GetFileInfo());
-		int zero_after = lsb->GetZero();
-		int one_after = lsb->GetOne();
+		
 
+		
 		std::cout<<"zero: "<<zero_before<<"one: "<<one_before;
 
-
-		fu->SaveFile(CString("./image/result/4.bmp"),lsb->GetPixelsInfo());
+		fu->SaveFile(CString("./image/result/5.bmp"),lsb->GetPixelsInfo());
 	}
 }
 
@@ -188,11 +189,15 @@ void CLSBDlg::OnBnClickedButtonReadFile()
 void CLSBDlg::OnBnClickedButtonReadInfo()
 {
 	FileUtil* fu = new FileUtil();
-	if(fu->ReadFile(CString("./image/result/4.bmp")))
+	if(fu->ReadFile(CString("./image/result/5.bmp")))
 	{
 		LSBUtil* lsb = new LSBUtil(fu->GetLineByte(),fu->GetHeight());
 		lsb->ExtractPixels(fu->GetFileInfo(),45);
 
+		lsb->CountLSB(fu->GetFileInfo());
+		int zero_after = lsb->GetZero();
+		int one_after = lsb->GetOne();
+		std::cout<<"zero: "<<zero_after<<"one: "<<one_after;
 
 		//MessageBox((LPCTSTR)lsb->GetTextData());
 	}
